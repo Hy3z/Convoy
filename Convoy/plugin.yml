@@ -1,0 +1,8 @@
+name: Convoy
+version: 1.0
+authors: [Hyez,XxGoldenbluexX]
+main: fr.convoy.convoy.Main
+api-version: 1.15
+commands:
+  conv:
+    description: Conv main command, /conv help for more informations.

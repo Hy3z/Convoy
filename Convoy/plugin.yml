@@ -1,0 +1,10 @@
+name: Convoy
+version: 1.0
+authors: [Hyez,XxGoldenbluexX]
+main: fr.convoyteam.convoy.Main
+api-version: 1.15
+depend: [ProtocolLib]
+commands:
+  conv:
+    description: Used for all convoy commands
+    usage: /conv

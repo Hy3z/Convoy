@@ -84,16 +84,18 @@ public class ConfigReader {
 	 * Crée le fichier ".yml" pour la map
 	 * @param mapName Nom de la map (sans le ".yml")
 	 */
-	public void createMapConfig(String mapName) {
+	public boolean createMapConfig(String mapName) {
 		File file = new File(mapFolder,mapName+".yml");
 		if (!file.exists()) {
 			try {
 				file.createNewFile();
+				return true;
 			} catch (IOException e) {
 				Bukkit.getConsoleSender().sendMessage(ChatColor.RED+"Error on config creation for map: "+ChatColor.AQUA+mapName);
 				e.printStackTrace();
 			}
 		}
+		return false;
 	}
 	/**
 	 * Pour supprimer la configuration de la map

@@ -210,17 +210,11 @@ public class CommandManager implements CommandExecutor,TabCompleter {
 	}
 	@Override
 	public List<String> onTabComplete(CommandSender arg0, Command arg1, String arg2, String[] arg3) {
-		if(arg3.length<1) {
-			return gameCommands;
-		}
-		if(arg3[0]=="map") {
-			if(arg3.length<3) {
-				return mapCommands;
-			}
-			return returnFollowCMD(arg3, mapCommands, 1);
-		}
 		if(arg3.length<2) {
 			return returnFollowCMD(arg3, gameCommands, 0);
+		}
+		if(arg3[0].equals("map")) {
+			return returnFollowCMD(arg3, mapCommands, 1);
 		}
 		return null;
 	}

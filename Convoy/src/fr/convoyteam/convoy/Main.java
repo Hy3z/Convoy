@@ -4,12 +4,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 
 import fr.convoyteam.convoy.enums.Team;
 
@@ -26,11 +29,15 @@ public class Main extends JavaPlugin implements Listener {
 	 */
 	private final HashMap<Player,Team> InGamePlayers = new HashMap<Player,Team>();
 	private final PluginManager pmanager = Bukkit.getPluginManager();
+	private final ConfigReader cfgReader = new ConfigReader(this);
+	private final LangManager lang = new LangManager(this);
 	private boolean gameStarted=false;
+	private Location defenderSpawn=null;
+	private Location pusherSpawn=null;
 	
 	@Override
 	public void onEnable() {
-		getCommand("conv").setExecutor(new CommandManager(this));
+		getCommand("conv").setExecutor(new CommandManager(this,cfgReader));
 		pmanager.registerEvents(this, this);
 	}
 	
@@ -104,13 +111,41 @@ public class Main extends JavaPlugin implements Listener {
 	public void onPlayerDamage(EntityDamageByEntityEvent event) {
 		if (event.getEntity() instanceof Player) {
 			Player p = (Player) event.getEntity();
-			if (InGamePlayers.containsKey(p) && gameStarted) {
-				if (InGamePlayers.get(p)==Team.DEFENDERS) {
-					
-				}else {
-					
-				}
+			if (InGamePlayers.containsKey(p) && gameStarted && p.getHealth()<=event.getDamage()) {
+				event.setCancelled(true);
+				respawnPlayer(p);
 			}
 		}
+	}
+	
+	/**
+	 * Méthode pour faire réaparaitre un joueur a son point d'aparition
+	 * Ne fonctione seulement si le joueur est dans la partie, si son spawn est chargé et si la partie a commencé
+	 * @param player Le joueur a faire réaparaitre
+	 */
+	public void respawnPlayer(Player player) {
+		if (InGamePlayers.containsKey(player) && gameStarted) {
+			if (InGamePlayers.get(player)==Team.DEFENDERS) {
+				if (defenderSpawn!=null){
+					player.teleport(defenderSpawn);
+				}
+			}else {
+				if (pusherSpawn!=null){
+					player.teleport(pusherSpawn);
+				}
+			}
+			player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION,40,9,false,false,true));
+		}
+	}
+	
+	
+	/**
+	 * Permet d'obtenir un text traduit dans la langue du joueur précisé
+	 * @param p Joueur dont on souhaite prendre la langue
+	 * @param path Chemin du texte traduit
+	 * @return Texte du chemin spécifié traduit dans la langue du joueur, retourne une chaine vide si le chemin n'existe pas
+	 */
+	public String getText(Player p , String path) {
+		return lang.get(p, path);
 	}
 }

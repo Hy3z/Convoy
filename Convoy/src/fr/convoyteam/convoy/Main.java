@@ -9,10 +9,13 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import fr.convoyteam.convoy.enums.Team;
 
@@ -28,9 +31,16 @@ public class Main extends JavaPlugin implements Listener {
 	 * Liste des joueurs dans la partie
 	 */
 	private final HashMap<Player,Team> InGamePlayers = new HashMap<Player,Team>();
+	private static final long GAME_TIME=1200*15;
 	private final PluginManager pmanager = Bukkit.getPluginManager();
 	private final ConfigReader cfgReader = new ConfigReader(this);
 	private final LangManager lang = new LangManager(this);
+	private final BukkitRunnable gameTimer = new BukkitRunnable() {
+		@Override
+		public void run() {
+			stopGame();
+		}
+	};
 	private boolean gameStarted=false;
 	private Location defenderSpawn=null;
 	private Location pusherSpawn=null;
@@ -46,6 +56,18 @@ public class Main extends JavaPlugin implements Listener {
 	 * @param player Le joueur que tu veut ajouter a la partie.
 	 * @return true si le joueur a bien rejoins, false si il était déja dans la partie.
 	 */
+	
+	public void startGame() {
+		gameStarted=true;
+		gameTimer.runTaskLater(this, GAME_TIME);
+	}
+	
+	public void stopGame() {
+		if (gameStarted) {
+			gameStarted=false;
+			gameTimer.cancel();
+		}
+	}
 	
 	public boolean addPlayer(Player player) {
 		if (InGamePlayers.containsKey(player)) {
@@ -102,6 +124,14 @@ public class Main extends JavaPlugin implements Listener {
 			}
 		}
 		return pl;
+	}
+	@EventHandler
+	public void onPlayerJoin(PlayerJoinEvent event) {
+		lang.add(event.getPlayer());
+	}
+	@EventHandler
+	public void onPlayerLeave(PlayerQuitEvent event) {
+		removePlayer(event.getPlayer());
 	}
 	/**
 	 * Méthode appelée par spigot a l'occasion de l'évenement EntityDamageByEntityEvent

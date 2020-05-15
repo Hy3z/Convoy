@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.HashMap;
+import java.util.WeakHashMap;
 
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -14,7 +14,7 @@ import org.bukkit.entity.Player;
 public class LangManager {
 	
 	private static final String DEFAULT_LANGUAGE = "en_GB";
-	private final HashMap<Player,String> playerLanguage = new HashMap<Player,String>();
+	private final WeakHashMap<Player,String> playerLanguage = new WeakHashMap<Player,String>();
 	private final Main mainref;
 	private final File langFolder;
 	

@@ -3,6 +3,7 @@ package fr.convoyteam.convoy;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -20,6 +21,7 @@ public class CommandManager implements CommandExecutor,TabCompleter {
 		mainref=main;
 		configref=config;
 		
+		gameCommands.add("start");
 		gameCommands.add("join");
 		gameCommands.add("ff");
 		gameCommands.add("leave");
@@ -40,16 +42,86 @@ public class CommandManager implements CommandExecutor,TabCompleter {
 	@Override
 	public boolean onCommand(CommandSender sender, Command arg1, String arg2, String[] arg3) {
 		switch(arg3[0]) {
+		case "start":
+			/*if(GameEnCours) {
+			gameRunningError(sender);
+			return false;
+			}*/
+			mainref.startGame();
+			sender.sendMessage(ChatColor.GREEN+"Game started!");
+			return true;
+			
 		case "join":
-		
+			/*if(GameEnCours) {
+				gameRunningError(sender);
+				return false;
+			}*/
+			Player toAdd;
+			if(arg3.length>2) {
+				toAdd=Bukkit.getPlayer(arg3[1]);
+				if(toAdd==null) {
+					unknownPlayerError(sender);
+					return false;
+				}
+			}else {
+				if(!(sender instanceof Player)) {
+					notPlayerError(sender);
+					return false;
+				}
+				toAdd=(Player)sender;
+			}
+			if(mainref.addPlayer(toAdd)) {
+				sender.sendMessage(ChatColor.GREEN+"Player joined the game");
+				return true;
+			}
+			sender.sendMessage("");
+			sender.sendMessage(ChatColor.RED+"Player is already in game!");
+			sender.sendMessage("");
+			return false;
+			
 		case "ff":
-				
+			
 		case "leave":
-				
+			Player toKick;
+			if(arg3.length>2) {
+				toKick=Bukkit.getPlayer(arg3[1]);
+				if(toKick==null) {
+					unknownPlayerError(sender);
+					return false;
+				}
+			}else {
+				if(!(sender instanceof Player)) {
+					notPlayerError(sender);
+					return false;
+				}
+				toKick=(Player)sender;
+			}
+			if(mainref.removePlayer(toKick)) {
+				sender.sendMessage(ChatColor.GREEN+"Player left this game");
+				return true;
+			}
+			sender.sendMessage("");
+			sender.sendMessage(ChatColor.RED+"Player is not in this game!");
+			sender.sendMessage("");
+			return false;
+			
 		case "restart":
-				
+			/*if(GamePasEnCours) {
+			gameNotRunningError(sender);
+			return false;
+			}*/
+			mainref.stopGame();
+			mainref.startGame();
+			return true;
+			
 		case "stop":
-				
+			/*if(GamePasEnCours) {
+			gameNotRunningError(sender);
+			return false;
+			}*/
+			mainref.stopGame();
+			sender.sendMessage(ChatColor.GREEN+"Game stopped!");
+			
 		case "map":
 			if(arg3.length>1) {
 				switch(arg3[1]) {
@@ -206,6 +278,21 @@ public class CommandManager implements CommandExecutor,TabCompleter {
 	public void notPlayerError(CommandSender sender) {
 		sender.sendMessage("");
 		sender.sendMessage(ChatColor.RED+"You need to be a player in order to use this command");
+		sender.sendMessage("");
+	}
+	public void unknownPlayerError(CommandSender sender) {
+		sender.sendMessage("");
+		sender.sendMessage(ChatColor.RED+"This player does not exist!");
+		sender.sendMessage("");
+	}
+	public void gameRunningError(CommandSender sender) {
+		sender.sendMessage("");
+		sender.sendMessage(ChatColor.RED+"This game is already running!");
+		sender.sendMessage("");
+	}
+	public void gameNotRunningError(CommandSender sender) {
+		sender.sendMessage("");
+		sender.sendMessage(ChatColor.RED+"This game is not running!");
 		sender.sendMessage("");
 	}
 	@Override

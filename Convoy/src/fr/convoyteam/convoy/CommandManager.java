@@ -37,6 +37,7 @@ public class CommandManager implements CommandExecutor,TabCompleter {
 		mapCommands.add("setCartEnd");
 		mapCommands.add("setPusherSpawn");
 		mapCommands.add("setDefenderSpawn");
+		mapCommands.add("setTrackLenght");
 	}
 		
 	@Override
@@ -190,7 +191,8 @@ public class CommandManager implements CommandExecutor,TabCompleter {
 						if (sender instanceof Player) {
 							YamlConfiguration cfg = configref.getMapConfig(arg3[2]);
 							if(cfg!=null) {
-								//METTRE LE CART
+								configref.setCartStart(arg3[2], ((Player)sender).getEyeLocation());
+								sender.sendMessage(ChatColor.GREEN+"Start of the track set!");
 								return true;
 							}
 							mapError(sender);
@@ -210,7 +212,8 @@ public class CommandManager implements CommandExecutor,TabCompleter {
 						if (sender instanceof Player) {
 							YamlConfiguration cfg = configref.getMapConfig(arg3[2]);
 							if(cfg!=null) {
-								//METTRE LE CART
+								configref.setCartEnd(arg3[2], ((Player)sender).getEyeLocation());
+								sender.sendMessage(ChatColor.GREEN+"End of the track set!");
 								return true;
 							}
 							mapError(sender);
@@ -230,8 +233,7 @@ public class CommandManager implements CommandExecutor,TabCompleter {
 						if (sender instanceof Player) {
 							YamlConfiguration cfg = configref.getMapConfig(arg3[2]);
 							if(cfg!=null) {
-								cfg.set("pusherSpawn", ((Player) sender).getLocation());
-								saveConfig(arg3[2],cfg);
+								configref.setPusherSpawn(arg3[2], ((Player)sender).getLocation());
 								sender.sendMessage(ChatColor.GREEN+"Pushers spawn location set!");
 								return true;
 							}
@@ -252,8 +254,7 @@ public class CommandManager implements CommandExecutor,TabCompleter {
 						if (sender instanceof Player) {
 							YamlConfiguration cfg = configref.getMapConfig(arg3[2]);
 							if(cfg!=null) {
-								cfg.set("defenderSpawn", ((Player) sender).getLocation());
-								saveConfig(arg3[2],cfg);
+								configref.setDefenderSpawn(arg3[2], ((Player)sender).getLocation());
 								sender.sendMessage(ChatColor.GREEN+"Defenders spawn location set!");
 								return true;
 							}
@@ -268,13 +269,26 @@ public class CommandManager implements CommandExecutor,TabCompleter {
 					sender.sendMessage(ChatColor.RED+"! "+ChatColor.BLUE+"Stand where the respawn point will be "+ChatColor.RED+"!");
 					sender.sendMessage("");
 					return false;
+				case "setTrackLenght":
+					if(arg3.length>2) {
+						YamlConfiguration cfg = configref.getMapConfig(arg3[2]);
+						if(cfg!=null) {
+							configref.setTrackLenght(arg3[2]);
+							sender.sendMessage(ChatColor.GREEN+"Track lenght registered!");
+							return true;
+						}
+						mapError(sender);
+						return false;
+					}
+					sender.sendMessage("");
+					sender.sendMessage(ChatColor.BLUE+"Usage: "+ChatColor.WHITE+"/conv map setTrackLenght "+ChatColor.GOLD+"<MapName>");
+					sender.sendMessage(ChatColor.RED+"! "+ChatColor.BLUE+"Will set the number of rails of the track "+ChatColor.RED+"!");
+					sender.sendMessage("");
+					return false;
 				}
 			}
 		}
 		return false;
-	}
-	public void saveConfig(String mapName, YamlConfiguration cfg) {
-		configref.saveMapConfig(mapName,cfg);
 	}
 	public void mapError(CommandSender sender) {
 		sender.sendMessage("");

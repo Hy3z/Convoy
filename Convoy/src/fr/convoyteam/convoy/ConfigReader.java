@@ -7,13 +7,18 @@ import java.util.ArrayList;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
-import org.bukkit.block.Block;
+import org.bukkit.Material;
+import org.bukkit.World;
+import org.bukkit.block.data.Rail;
+import org.bukkit.block.data.Rail.Shape;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.util.Vector;
 
 public class ConfigReader {
 	private Main mainref;
 	private File mapFolder;
+	private ArrayList<Material> railList = new ArrayList<Material>();
 	
 	public ConfigReader(Main main) {
 		mainref=main;
@@ -25,6 +30,7 @@ public class ConfigReader {
 			folder.mkdir();
 		}
 		mapFolder=folder;
+		fillRailList();
 	}
 	/**
 	 * Renvoie la configuration de la map
@@ -193,10 +199,10 @@ public class ConfigReader {
 	 * @param mapName Nom de la map (sans le ".yml")
 	 * @return Block
 	 */
-	public Block getCartStart(String mapName){
+	public Location getCartStart(String mapName){
 		YamlConfiguration config = getMapConfig(mapName);
 		if (config!=null) {
-			return (Block) config.get("cartStart");
+			return config.getLocation("cartStart");
 		}
 		return null;
 	}
@@ -206,10 +212,10 @@ public class ConfigReader {
 	 * @param block Le nouveau block de départ
 	 * @return True si tout s'est bien passé
 	 */
-	public boolean setCartStart(String mapName, Block block) {
+	public boolean setCartStart(String mapName, Location location) {
 		YamlConfiguration config = getMapConfig(mapName);
 		if (config!=null) {
-			config.set("cartStart", block);
+			config.set("cartStart", location);
 			saveMapConfig(mapName, config);
 			return true;
 		}
@@ -220,10 +226,10 @@ public class ConfigReader {
 	 * @param mapName Nom de la map (sans le ".yml")
 	 * @return Block
 	 */
-	public Block getCartEnd(String mapName){
+	public Location getCartEnd(String mapName){
 		YamlConfiguration config = getMapConfig(mapName);
 		if (config!=null) {
-			return (Block) config.get("cartEnd");
+			return config.getLocation("cartEnd");
 		}
 		return null;
 	}
@@ -233,13 +239,128 @@ public class ConfigReader {
 	 * @param block Le nouveau block de fin
 	 * @return True si tout s'est bien passé
 	 */
-	public boolean getCartEnd(String mapName, Block block) {
+	public boolean setCartEnd(String mapName, Location location) {
 		YamlConfiguration config = getMapConfig(mapName);
 		if (config!=null) {
-			config.set("cartEnd", block);
+			config.set("cartEnd", location);
 			saveMapConfig(mapName, config);
 			return true;
 		}
 		return false;
+	}
+	/**
+	 * Met l'information du nombre de rails (pour le pourcentage)
+	 * @param mapName Nom de la map (sans le ".yml")
+	 * @return True si tout s'est bien passé
+	 */
+	public boolean setTrackLenght(String mapName) {
+		YamlConfiguration config = getMapConfig(mapName);
+		if (config!=null) {
+			Location startLocation = getCartStart(mapName);
+			Location endLocation = getCartEnd(mapName);
+			if(startLocation!=null&&endLocation!=null) {
+				int railLenght = getRailLenght(startLocation,endLocation);
+				config.set("trackLenght", railLenght);
+				saveMapConfig(mapName, config);
+				return true;
+			}
+		}
+		return false;
+	}
+	public int getRailLenght(Location startLocation, Location endLocation) {
+		World world = startLocation.getWorld();
+		int railCount=0;
+		Location newLocation=null;
+		Location currentLocation=startLocation;
+		Location previousLocation=null;
+		while(currentLocation.getBlock()!=endLocation.getBlock()) {
+			if(railCount!=0) {
+				newLocation = getNewLocation(world, currentLocation, previousLocation);
+			}else {
+				newLocation = getSecondLocation(world, currentLocation);
+			}
+			previousLocation = currentLocation;
+			currentLocation = newLocation;
+			railCount++;
+		}
+		return railCount;
+	}
+	
+	public Location getNewLocation(World world, Location currentLocation, Location previousLocation) {
+		Shape railShape = ((Rail)currentLocation.getBlock().getBlockData()).getShape();
+		switch(railShape) {
+		case ASCENDING_EAST:
+			return ascendingRail(currentLocation, previousLocation, new Vector(1,1,0));
+		case ASCENDING_NORTH:
+			return ascendingRail(currentLocation, previousLocation, new Vector(0,1,-1));
+		case ASCENDING_SOUTH:
+			return ascendingRail(currentLocation, previousLocation, new Vector(0,1,1));
+		case ASCENDING_WEST:
+			return ascendingRail(currentLocation, previousLocation, new Vector(-1,1,0));
+		case EAST_WEST:
+			return straightRail(currentLocation, previousLocation, new Vector(-1,0,0));
+		case NORTH_SOUTH:
+			return straightRail(currentLocation, previousLocation, new Vector(0,0,1));	
+		case NORTH_EAST:
+			return (turningRail(currentLocation, previousLocation, new Vector(1,0,0), new Vector(0,0,-1)));
+		case NORTH_WEST:
+			return (turningRail(currentLocation, previousLocation, new Vector(-1,0,0), new Vector(0,0,-1)));
+		case SOUTH_EAST:
+			return (turningRail(currentLocation, previousLocation, new Vector(1,0,0), new Vector(0,0,1)));
+		case SOUTH_WEST:
+			return (turningRail(currentLocation, previousLocation, new Vector(-1,0,0), new Vector(0,0,1)));
+		}
+		return null;
+	}
+	public boolean isNewRail(Location currentLocation, Location previousLocation, Vector vector) {
+		if(currentLocation.add(vector).getBlock()!=previousLocation.getBlock()){
+			return true;
+		}
+		return false;
+	}
+	public Location straightRail(Location currentLocation, Location previousLocation, Vector vector) {
+		if(isNewRail(currentLocation, previousLocation, vector)) {
+			return currentLocation.add(vector);
+		}
+		return currentLocation.subtract(vector);
+	}
+	public Location ascendingRail(Location currentLocation, Location previousLocation, Vector vector) {
+		if(isNewRail(currentLocation, previousLocation, vector)) {
+			return currentLocation.add(vector);
+		}
+		if(isNewRail(currentLocation, previousLocation, vector.multiply(-1))) {
+			return currentLocation.subtract(vector);
+		}
+		return currentLocation.subtract(vector.setY(0));
+	}
+	public Location turningRail(Location currentLocation, Location previousLocation, Vector vector1, Vector vector2) {
+		if(isNewRail(currentLocation, previousLocation, vector1)) {
+			return currentLocation.add(vector1);
+		}
+		return currentLocation.add(vector2);
+	}
+	public Location getSecondLocation(World world, Location startLocation) {
+		Shape railShape = ((Rail)startLocation.getBlock().getBlockData()).getShape();
+		switch(railShape) {
+		case NORTH_SOUTH:
+			if(railList.contains(world.getBlockAt(startLocation.add(0, 0, -1)).getType())) {
+				return startLocation.add(0,0,-1);
+			}
+			return startLocation.add(0,0,1);
+				//
+		case EAST_WEST:
+			if(railList.contains(world.getBlockAt(startLocation.add(1, 0, 0)).getType())) {
+				return startLocation.add(1,0,0);
+			}
+				return startLocation.add(-1,0,0);
+		default:
+			return null;
+		}
+	}
+	public void fillRailList() {
+		railList.add(Material.RAIL);
+		railList.add(Material.ACTIVATOR_RAIL);
+		railList.add(Material.DETECTOR_RAIL);
+		railList.add(Material.POWERED_RAIL);
 	}
 }

@@ -2,6 +2,7 @@ package fr.convoyteam.convoy;
 
 import java.util.ArrayList;
 
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -18,21 +19,26 @@ import org.bukkit.event.vehicle.VehicleEntityCollisionEvent;
 import org.bukkit.event.vehicle.VehicleMoveEvent;
 import org.bukkit.util.Vector;
 
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
+
 public class CartWrapper implements Listener {
-	private ConfigReader configref;
-	private String mapName;
 	private Minecart cart;
 	private World world;
-	private Block spawnBlock;
+	private Location spawnLocation;
+	private Location endLocation;
 	private Main mainref;
-	private byte SQUARED_MAX_PUSH_RANGE = 4;
+	private final byte SQUARED_MAX_PUSH_RANGE = 4;
+	private int TOTAL_RAIL;
+	private Block previousBlock;
+	private int railNumber;
 	private ArrayList<Material> railList = new ArrayList<Material>();
-	public CartWrapper(ConfigReader _configref, String _mapName, World _world, Main _mainref) {
-		configref=_configref;
-		mapName=_mapName;
-		world=_world;
+	public CartWrapper(Main _mainref, Location _spawnLocation, Location _endLocation, Integer _TOTAL_RAIL) {
 		mainref=_mainref;
-		spawnBlock=configref.getCartStart(mapName);
+		spawnLocation=_spawnLocation;
+		endLocation=_endLocation;
+		TOTAL_RAIL=_TOTAL_RAIL;
+		world=spawnLocation.getWorld();
 		fillRailList();
 		summonCart();
 	}
@@ -44,15 +50,20 @@ public class CartWrapper implements Listener {
 	}
 	
 	public void tick() {
-		int nbPusher = getPushersInRange().size();
-		if(nbPusher>=1) {
+		if(getPushersInRange().size()>=1) {
 			if(cart.getMaxSpeed()==0) {
 				cart.setMaxSpeed(0.4);
 			}
 			cart.setVelocity(new Vector(0,0.05,0));	
 		}
+		showAdvancementForPushers();
+		
 	}
-	
+	public void showAdvancementForPushers() {
+		for(Player pusher : mainref.getPushers()) {
+			pusher.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.DARK_GREEN+"Advancement: "+ChatColor.GOLD+Math.round((railNumber/TOTAL_RAIL)*100)+"%"));
+		}
+	}
 	public ArrayList<Player> getPushersInRange(){
 		ArrayList<Player> pushersInRange = new ArrayList<Player>();
 		for(Player pusher : mainref.getPushers()) {
@@ -65,7 +76,7 @@ public class CartWrapper implements Listener {
 	
 	public void summonCart() {
 		Float yaw = getYawForLocation();
-		Location spawnLoc = spawnBlock.getLocation();
+		Location spawnLoc = spawnLocation;
 		spawnLoc.setYaw(yaw);
 		cart = (Minecart)world.spawnEntity(spawnLoc, EntityType.MINECART_TNT);
 		cart.setInvulnerable(true);
@@ -88,15 +99,15 @@ public class CartWrapper implements Listener {
 	}
 	
 	public BlockFace getRailDirection() {
-		Shape railShape = ((Rail)spawnBlock.getBlockData()).getShape();
+		Shape railShape = ((Rail)spawnLocation.getBlock().getBlockData()).getShape();
 		switch(railShape) {
 		case NORTH_SOUTH:
-			if(railList.contains(world.getBlockAt(spawnBlock.getLocation().add(0, 0, -1)).getType())) {
+			if(railList.contains(world.getBlockAt(spawnLocation.add(0, 0, -1)).getType())) {
 				return BlockFace.NORTH;
 			}
 			return BlockFace.SOUTH;
 		case EAST_WEST:
-			if(railList.contains(world.getBlockAt(spawnBlock.getLocation().add(1, 0, 0)).getType())) {
+			if(railList.contains(world.getBlockAt(spawnLocation.add(1, 0, 0)).getType())) {
 				return BlockFace.EAST;
 			}
 			return BlockFace.WEST;
@@ -109,12 +120,19 @@ public class CartWrapper implements Listener {
 	}
 	@EventHandler
 	public void onCartMove(VehicleMoveEvent event) {
-		if(cart.getLocation().getBlock()==configref.getCartEnd(mapName)){
-			mainref.stopGame();
-			return;
-		}
-		if(getPushersInRange().size()==0&&cart.getMaxSpeed()!=0) {
-			cart.setMaxSpeed(0);
+		if(event.getVehicle()==cart) {
+			if(cart.getLocation()==endLocation){
+				mainref.stopGame();
+				return;
+			}
+			Block currentRail = cart.getLocation().getBlock();
+			if(currentRail!=previousBlock) {
+				previousBlock=currentRail;
+				railNumber++;
+			}
+			if(getPushersInRange().size()==0&&cart.getMaxSpeed()!=0) {
+				cart.setMaxSpeed(0);
+			}
 		}
 	}
 	

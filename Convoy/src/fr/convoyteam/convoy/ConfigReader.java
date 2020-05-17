@@ -259,7 +259,7 @@ public class ConfigReader {
 			Location startLocation = getCartStart(mapName);
 			Location endLocation = getCartEnd(mapName);
 			if(startLocation!=null&&endLocation!=null) {
-				int railLenght = getRailLenght(startLocation,endLocation);
+				int railLenght = calculateTrackLenght(startLocation,endLocation);
 				config.set("trackLenght", railLenght);
 				saveMapConfig(mapName, config);
 				return true;
@@ -267,7 +267,19 @@ public class ConfigReader {
 		}
 		return false;
 	}
-	public int getRailLenght(Location startLocation, Location endLocation) {
+	/**
+	 * Renvoie le nombre de rail de la map
+	 * @param mapName Nom de la map (sans le ".yml")
+	 * @return -1 si erreur
+	 */
+	public int getRailLenght(String mapName) {
+		YamlConfiguration config = getMapConfig(mapName);
+		if (config!=null) {
+			return config.getInt("trackLenght");
+		}
+		return -1;
+	}
+	public int calculateTrackLenght(Location startLocation, Location endLocation) {
 		World world = startLocation.getWorld();
 		int railCount=0;
 		Location newLocation=null;

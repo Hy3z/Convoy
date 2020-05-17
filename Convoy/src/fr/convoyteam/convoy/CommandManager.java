@@ -80,6 +80,12 @@ public class CommandManager implements CommandExecutor,TabCompleter {
 			return false;
 			
 		case "ff":
+			/*if(GamePasEnCours) {
+			gameNotRunningError(sender);
+			return false;
+			}*/
+			
+			//FAIRE LE FF
 			
 		case "leave":
 			Player toKick;
@@ -121,6 +127,7 @@ public class CommandManager implements CommandExecutor,TabCompleter {
 			}*/
 			mainref.stopGame();
 			sender.sendMessage(ChatColor.GREEN+"Game stopped!");
+			return true;
 			
 		case "map":
 			if(arg3.length>1) {

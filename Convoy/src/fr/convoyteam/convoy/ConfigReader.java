@@ -272,7 +272,7 @@ public class ConfigReader {
 	 * @param mapName Nom de la map (sans le ".yml")
 	 * @return -1 si erreur
 	 */
-	public int getRailLenght(String mapName) {
+	public int getTrackLenght(String mapName) {
 		YamlConfiguration config = getMapConfig(mapName);
 		if (config!=null) {
 			return config.getInt("trackLenght");

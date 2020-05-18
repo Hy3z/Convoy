@@ -15,6 +15,8 @@ import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.util.Vector;
 
+import fr.convoyteam.convoy.weapons.BasePistol;
+
 public class ConfigReader {
 	private Main mainref;
 	private File mapFolder;
@@ -218,14 +220,18 @@ public class ConfigReader {
 		}
 		return pistolList;
 	}
-	/*
+	/**
+	 * Obtenir le BasePistol du pistolet
+	 * @param pistolName Nom du pistolet (sans le ".yml")
+	 * @return BasePistol
+	 */
 	public BasePistol getPistol(String pistolName) {
 		YamlConfiguration config = getPistolConfig(pistolName);
 		if (config!=null) {
 			return new BasePistol(config);
 		}
 		return null;
-	}*/
+	}
 	
 //---------------------------------------------------------------------------------------------------------------------------------------------
 

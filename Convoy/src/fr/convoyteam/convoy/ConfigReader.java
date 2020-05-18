@@ -115,6 +115,9 @@ public class ConfigReader {
 		}
 		return false;
 	}
+	
+//---------------------------------------------------------------------------------------------------------------------------------------------
+
 	/**
 	 * Pour sauvegarder la configuration de la map
 	 * @param mapName Nom de la map (sans le ".yml")
@@ -135,6 +138,29 @@ public class ConfigReader {
 		}
 		return true;
 	}
+	/**
+	 * Pour sauvegarder la configuration du pistolet
+	 * @param mapName Nom du pistolet (sans le ".yml")
+	 * @param config La configuration du pistolet
+	 * @return True si tout s'est bien passé
+	 */
+	public boolean savePistolConfig(String pistolName, YamlConfiguration config) {
+		File f = new File(pistolFolder,pistolName+".yml");
+		if (!f.exists()) {
+			Bukkit.getConsoleSender().sendMessage(ChatColor.RED+"File: "+ChatColor.AQUA+pistolName+".yml"+ChatColor.RED+" does not exist");
+			return false;
+		}else try {
+			config.save(f);
+		} catch (IOException e) {
+			Bukkit.getConsoleSender().sendMessage(ChatColor.RED+"Error on saving changes on pistol: "+ChatColor.AQUA+pistolName);
+			e.printStackTrace();
+			return false;
+		}
+		return true;
+	}
+	
+//---------------------------------------------------------------------------------------------------------------------------------------------
+
 	/**
 	 * Renomme le fichier ".yml" de la map
 	 * @param mapName Actuel nom de la map (sans le ".yml")
@@ -158,6 +184,9 @@ public class ConfigReader {
 			return false;
 		}
 	}
+	
+//---------------------------------------------------------------------------------------------------------------------------------------------
+
 	/**
 	 * Pour supprimer la configuration de la map
 	 * @param mapName Nom de la map (sans le ".yml")

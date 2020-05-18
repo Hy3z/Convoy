@@ -18,20 +18,26 @@ import org.bukkit.util.Vector;
 public class ConfigReader {
 	private Main mainref;
 	private File mapFolder;
-	private ArrayList<Material> railList = new ArrayList<Material>();
-	
-	public ConfigReader(Main main) {
-		mainref=main;
+	private File pistolFolder;
+	public ConfigReader(Main _mainref) {
+		mainref=_mainref;
 		if(!mainref.getDataFolder().exists()) {
 			mainref.getDataFolder().mkdir();
 		}
-		File folder = new File(mainref.getDataFolder(),"Maps");
-		if (!folder.exists()){
-			folder.mkdir();
+		File _mapFolder = new File(mainref.getDataFolder(),"Maps");
+		if (!_mapFolder.exists()){
+			_mapFolder.mkdir();
 		}
-		mapFolder=folder;
-		fillRailList();
+		mapFolder=_mapFolder;
+		File _pistolFolder = new File(mainref.getDataFolder(),"Pistols");
+		if (!_pistolFolder.exists()){
+			_pistolFolder.mkdir();
+		}
+		pistolFolder=_pistolFolder;
 	}
+	
+//---------------------------------------------------------------------------------------------------------------------------------------------
+
 	/**
 	 * Renvoie la configuration de la map
 	 * @param mapName Nom de la map (sans le .yml)
@@ -53,6 +59,29 @@ public class ConfigReader {
 		return null;
 	}
 	/**
+	 * Renvoie la configuration du pistolet
+	 * @param pistolName Nom du pistolet (sans le .yml)
+	 * @return YamlConfiguration
+	 */
+	public YamlConfiguration getPistolConfig(String pistolName) {
+		File file = new File(pistolFolder,pistolName+".yml");
+		if (file.exists()) {
+			YamlConfiguration config = new YamlConfiguration();
+			try {
+				config.load(file);
+			} catch (IOException | InvalidConfigurationException e) {
+				e.printStackTrace();
+				Bukkit.getConsoleSender().sendMessage(ChatColor.RED+"Error loading pistol: "+ChatColor.AQUA+pistolName);
+				return null;
+			}
+			return config;
+		}
+		return null;
+	}
+	
+//---------------------------------------------------------------------------------------------------------------------------------------------
+
+	/**
 	 * Renvoie la liste des map
 	 * @return ArrayList(String) 
 	 */
@@ -65,6 +94,26 @@ public class ConfigReader {
 			}
 		}
 		return withYAML;
+	}
+	
+//---------------------------------------------------------------------------------------------------------------------------------------------
+	
+	/**
+	 * Crée le fichier ".yml" pour la map
+	 * @param mapName Nom de la map (sans le ".yml")
+	 */
+	public boolean createMapConfig(String mapName) {
+		File file = new File(mapFolder,mapName+".yml");
+		if (!file.exists()) {
+			try {
+				file.createNewFile();
+				return true;
+			} catch (IOException e) {
+				Bukkit.getConsoleSender().sendMessage(ChatColor.RED+"Error on config creation for map: "+ChatColor.AQUA+mapName);
+				e.printStackTrace();
+			}
+		}
+		return false;
 	}
 	/**
 	 * Pour sauvegarder la configuration de la map
@@ -85,37 +134,6 @@ public class ConfigReader {
 			return false;
 		}
 		return true;
-	}
-	/**
-	 * Crée le fichier ".yml" pour la map
-	 * @param mapName Nom de la map (sans le ".yml")
-	 */
-	public boolean createMapConfig(String mapName) {
-		File file = new File(mapFolder,mapName+".yml");
-		if (!file.exists()) {
-			try {
-				file.createNewFile();
-				return true;
-			} catch (IOException e) {
-				Bukkit.getConsoleSender().sendMessage(ChatColor.RED+"Error on config creation for map: "+ChatColor.AQUA+mapName);
-				e.printStackTrace();
-			}
-		}
-		return false;
-	}
-	/**
-	 * Pour supprimer la configuration de la map
-	 * @param mapName Nom de la map (sans le ".yml")
-	 * @return True si tout s'est bien passé
-	 */
-	public boolean deleteMapConfig(String mapName){
-		File file = new File(mapFolder,mapName+".yml");
-		if(file.exists()) {
-			file.delete();
-			return true;
-		}else {
-			return false;
-		}
 	}
 	/**
 	 * Renomme le fichier ".yml" de la map
@@ -140,6 +158,48 @@ public class ConfigReader {
 			return false;
 		}
 	}
+	/**
+	 * Pour supprimer la configuration de la map
+	 * @param mapName Nom de la map (sans le ".yml")
+	 * @return True si tout s'est bien passé
+	 */
+	public boolean deleteMapConfig(String mapName){
+		File file = new File(mapFolder,mapName+".yml");
+		if(file.exists()) {
+			file.delete();
+			return true;
+		}else {
+			return false;
+		}
+	}
+	
+//---------------------------------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Obtenir la liste des pistoles
+	 * @return String[] sans les ".yml"
+	 */
+	public String[] getPistolList() {
+		String[] pistolFiles = pistolFolder.list();
+		String[] pistolList = new String[]{};
+		for(String pistol : pistolFiles) {
+			if(pistol.contains(".yml")) {
+				pistolList[pistolList.length]=pistol.replace(".yml", "");
+			}
+		}
+		return pistolList;
+	}
+	/*
+	public BasePistol getPistol(String pistolName) {
+		YamlConfiguration config = getPistolConfig(pistolName);
+		if (config!=null) {
+			return new BasePistol(config);
+		}
+		return null;
+	}*/
+	
+//---------------------------------------------------------------------------------------------------------------------------------------------
+
 	/**
 	 * Renvoie la location du spawn des Defender
 	 * @param mapName Nom de la map (sans le ".yml")
@@ -167,6 +227,9 @@ public class ConfigReader {
 		}
 		return false;
 	}
+	
+//---------------------------------------------------------------------------------------------------------------------------------------------
+
 	/**
 	 * Renvoie la location du spawn des Pusher
 	 * @param mapName Nom de la map (sans le ".yml")
@@ -194,6 +257,9 @@ public class ConfigReader {
 		}
 		return false;
 	}
+	
+//---------------------------------------------------------------------------------------------------------------------------------------------
+
 	/**
 	 * Renvoie le block du départ de la charge
 	 * @param mapName Nom de la map (sans le ".yml")
@@ -207,7 +273,7 @@ public class ConfigReader {
 		return null;
 	}
 	/**
-	 * Change le block du départ de la charge
+	 * Change la location du block de départ de la charge
 	 * @param mapName Nom de la map (sans le ".yml")
 	 * @param block Le nouveau block de départ
 	 * @return True si tout s'est bien passé
@@ -221,6 +287,9 @@ public class ConfigReader {
 		}
 		return false;
 	}
+	
+//---------------------------------------------------------------------------------------------------------------------------------------------
+	
 	/**
 	 * Renvoie le block de fin de la charge
 	 * @param mapName Nom de la map (sans le ".yml")
@@ -234,7 +303,7 @@ public class ConfigReader {
 		return null;
 	}
 	/**
-	 * Change le block de fin de la charge
+	 * Change la location du block de fin de la charge
 	 * @param mapName Nom de la map (sans le ".yml")
 	 * @param block Le nouveau block de fin
 	 * @return True si tout s'est bien passé
@@ -248,6 +317,9 @@ public class ConfigReader {
 		}
 		return false;
 	}
+	
+//---------------------------------------------------------------------------------------------------------------------------------------------
+	
 	/**
 	 * Met l'information du nombre de rails (pour le pourcentage)
 	 * @param mapName Nom de la map (sans le ".yml")
@@ -279,7 +351,10 @@ public class ConfigReader {
 		}
 		return -1;
 	}
-	public int calculateTrackLenght(Location startLocation, Location endLocation) {
+	
+//---------------------------------------------------------------------------------------------------------------------------------------------
+	
+	private int calculateTrackLenght(Location startLocation, Location endLocation) {
 		World world = startLocation.getWorld();
 		int railCount=0;
 		Location newLocation=null;
@@ -298,7 +373,7 @@ public class ConfigReader {
 		return railCount;
 	}
 	
-	public Location getNewLocation(World world, Location currentLocation, Location previousLocation) {
+	private Location getNewLocation(World world, Location currentLocation, Location previousLocation) {
 		Shape railShape = ((Rail)currentLocation.getBlock().getBlockData()).getShape();
 		switch(railShape) {
 		case ASCENDING_EAST:
@@ -324,19 +399,19 @@ public class ConfigReader {
 		}
 		return null;
 	}
-	public boolean isNewRail(Location currentLocation, Location previousLocation, Vector vector) {
+	private boolean isNewRail(Location currentLocation, Location previousLocation, Vector vector) {
 		if(currentLocation.add(vector).getBlock()!=previousLocation.getBlock()){
 			return true;
 		}
 		return false;
 	}
-	public Location straightRail(Location currentLocation, Location previousLocation, Vector vector) {
+	private Location straightRail(Location currentLocation, Location previousLocation, Vector vector) {
 		if(isNewRail(currentLocation, previousLocation, vector)) {
 			return currentLocation.add(vector);
 		}
 		return currentLocation.subtract(vector);
 	}
-	public Location ascendingRail(Location currentLocation, Location previousLocation, Vector vector) {
+	private Location ascendingRail(Location currentLocation, Location previousLocation, Vector vector) {
 		if(isNewRail(currentLocation, previousLocation, vector)) {
 			return currentLocation.add(vector);
 		}
@@ -345,14 +420,19 @@ public class ConfigReader {
 		}
 		return currentLocation.subtract(vector.setY(0));
 	}
-	public Location turningRail(Location currentLocation, Location previousLocation, Vector vector1, Vector vector2) {
+	private Location turningRail(Location currentLocation, Location previousLocation, Vector vector1, Vector vector2) {
 		if(isNewRail(currentLocation, previousLocation, vector1)) {
 			return currentLocation.add(vector1);
 		}
 		return currentLocation.add(vector2);
 	}
-	public Location getSecondLocation(World world, Location startLocation) {
+	private Location getSecondLocation(World world, Location startLocation) {
 		Shape railShape = ((Rail)startLocation.getBlock().getBlockData()).getShape();
+		ArrayList<Material> railList = new ArrayList<Material>();
+		railList.add(Material.RAIL);
+		railList.add(Material.ACTIVATOR_RAIL);
+		railList.add(Material.DETECTOR_RAIL);
+		railList.add(Material.POWERED_RAIL);
 		switch(railShape) {
 		case NORTH_SOUTH:
 			if(railList.contains(world.getBlockAt(startLocation.add(0, 0, -1)).getType())) {
@@ -368,11 +448,5 @@ public class ConfigReader {
 		default:
 			return null;
 		}
-	}
-	public void fillRailList() {
-		railList.add(Material.RAIL);
-		railList.add(Material.ACTIVATOR_RAIL);
-		railList.add(Material.DETECTOR_RAIL);
-		railList.add(Material.POWERED_RAIL);
 	}
 }

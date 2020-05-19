@@ -15,6 +15,8 @@ import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.util.Vector;
 
+import fr.convoyteam.convoy.weapons.BasePistol;
+
 public class ConfigReader {
 	private Main mainref;
 	private File mapFolder;
@@ -223,15 +225,34 @@ public class ConfigReader {
 	 * @param pistolName Nom du pistolet (sans le ".yml")
 	 * @return BasePistol
 	 */
-	
-	/*public BasePistol getPistol(String pistolName) {
+	public BasePistol getPistol(String pistolName) {
 		YamlConfiguration config = getPistolConfig(pistolName);
 		if (config!=null) {
-			RECUPERER LES PARAMETRES DU PISTOLET
-			return new BasePistol(LES PARAMETRES DU PISTOLET);
+			ArrayList<Object> weaponValues = new ArrayList<Object>();
+			byte magazineCapacity = (byte)config.getInt("magazineCapacity");
+			weaponValues.add(magazineCapacity);
+			String fireMode = config.getString("fireMode");
+			weaponValues.add(fireMode);
+			float fireRate = (float)config.get("fireRate");
+			weaponValues.add(fireRate);
+			float precision = (float)config.get("precision");
+			weaponValues.add(precision);
+			float damage = (float)config.get("damage");
+			weaponValues.add(damage);
+			float bulletSpeed = (float)config.get("bulletSpeed");
+			weaponValues.add(bulletSpeed);
+			float firingSlow = (float)config.get("firingSlow");
+			weaponValues.add(firingSlow);
+			float zoomPower = (float)config.get("zoomPower");
+			weaponValues.add(zoomPower);
+			float carrySlow = (float)config.get("carrySlow");
+			weaponValues.add(carrySlow);
+			if(!weaponValues.contains(null)) {
+				return new BasePistol(magazineCapacity, fireMode, fireRate, damage, precision, bulletSpeed, firingSlow, zoomPower, carrySlow);
+			}
 		}
 		return null;
-	}*/
+	}
 	
 //---------------------------------------------------------------------------------------------------------------------------------------------
 

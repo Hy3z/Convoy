@@ -43,18 +43,25 @@ public class CartWrapper implements Listener {
 		world=spawnLocation.getWorld();
 		summonCart();
 	}
+
+//---------------------------------------------------------------------------------------------------------------------------------------------
+
+	private void summonCart() {
+		Float yaw = getYawForLocation();
+		Location spawnLoc = spawnLocation;
+		spawnLoc.setYaw(yaw);
+		cart = (Minecart)world.spawnEntity(spawnLoc, EntityType.MINECART_TNT);
+		cart.setInvulnerable(true);
+	}
 	/**
 	 * Destroy the cart
 	 */ 
 	public void destroyCart() {
 		cart.remove();
 	}
-	/**
-	 * Unregister the cart
-	 */
-	public void unregister(){
-		  HandlerList.unregisterAll(this);
-	}
+	
+//---------------------------------------------------------------------------------------------------------------------------------------------
+
 	/**
 	 * To tick for particles, messages and cart end detection
 	 */
@@ -71,13 +78,10 @@ public class CartWrapper implements Listener {
 			return;
 		}
 		showAdvancementForPushers("[Standby]");
-		
 	}
-	private void showAdvancementForPushers(String cartStatus) {
-		for(Player pusher : mainref.getPushers()) {
-			pusher.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.DARK_GREEN+"cartStatus: "+ChatColor.GOLD+Math.round((railNumber/TOTAL_RAIL)*100)+"%"));
-		}
-	}
+
+//---------------------------------------------------------------------------------------------------------------------------------------------
+
 	private ArrayList<Player> getPushersInRange(){
 		ArrayList<Player> pushersInRange = new ArrayList<Player>();
 		for(Player pusher : mainref.getPushers()) {
@@ -87,13 +91,17 @@ public class CartWrapper implements Listener {
 		}
 		return pushersInRange;
 	}
-	public void summonCart() {
-		Float yaw = getYawForLocation();
-		Location spawnLoc = spawnLocation;
-		spawnLoc.setYaw(yaw);
-		cart = (Minecart)world.spawnEntity(spawnLoc, EntityType.MINECART_TNT);
-		cart.setInvulnerable(true);
+
+//---------------------------------------------------------------------------------------------------------------------------------------------
+
+	private void showAdvancementForPushers(String cartStatus) {
+		for(Player pusher : mainref.getPushers()) {
+			pusher.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.DARK_GREEN+"cartStatus: "+ChatColor.GOLD+Math.round((railNumber/TOTAL_RAIL)*100)+"%"));
+		}
 	}
+	
+//---------------------------------------------------------------------------------------------------------------------------------------------
+
 	private Float getYawForLocation() {
 		BlockFace direction = getRailDirection();
 		switch(direction) {
@@ -133,6 +141,9 @@ public class CartWrapper implements Listener {
 			return null;
 		}	
 	}
+	
+//---------------------------------------------------------------------------------------------------------------------------------------------
+
 	private ArrayList<Vector> fillPushVectorList(int nbPointsParRayon) {
 		ArrayList<Vector> vectorList = new ArrayList<Vector>();
 		float pas = MAX_PUSH_RANGE/nbPointsParRayon;
@@ -146,6 +157,18 @@ public class CartWrapper implements Listener {
 		}
 		return vectorList;
 	}
+
+//---------------------------------------------------------------------------------------------------------------------------------------------
+	
+	/**
+	 * Unregister the cart
+	 */
+	public void unregister(){
+		  HandlerList.unregisterAll(this);
+	}
+	
+//---------------------------------------------------------------------------------------------------------------------------------------------
+
 	@EventHandler
 	private void onCartMove(VehicleMoveEvent event) {
 		if(event.getVehicle()==cart) {

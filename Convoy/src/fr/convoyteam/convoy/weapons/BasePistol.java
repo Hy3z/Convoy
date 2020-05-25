@@ -117,7 +117,7 @@ public class BasePistol extends BaseWeapon {
 				fire();
 				return;
 			}
-			if(canReload()) {
+			if(canReload()&&currentBullets==0) {
 				reload();
 			}
 		}
@@ -271,7 +271,13 @@ public class BasePistol extends BaseWeapon {
 	}
 	
 //---------------------------------------------------------------------------------------------------------------------------------------------
-
+	
+	private void summonBullet(Location bulletLoc) {
+		Snowball bullet = (Snowball) player.getWorld().spawnEntity(bulletLoc, EntityType.SNOWBALL);
+		Vector bulletVector = getBulletVector(player);
+		bullet.setVelocity(bulletVector);
+		bulletsFired.add(bullet);
+	}
 	private void summonTNT(Location tntLoc) {
 		TNTPrimed tnt = (TNTPrimed)player.getWorld().spawnEntity(tntLoc, EntityType.PRIMED_TNT);
 		tnt.setIsIncendiary(false);
@@ -279,12 +285,7 @@ public class BasePistol extends BaseWeapon {
 		tntFired.add(tnt);
 		
 	}
-	private void summonBullet(Location bulletLoc) {
-		Snowball bullet = (Snowball) player.getWorld().spawnEntity(bulletLoc, EntityType.SNOWBALL);
-		Vector bulletVector = getBulletVector(player);
-		bullet.setVelocity(bulletVector);
-		bulletsFired.add(bullet);
-	}
+	
 //---------------------------------------------------------------------------------------------------------------------------------------------
 
 	private void weaponFeatures() {
@@ -317,6 +318,7 @@ public class BasePistol extends BaseWeapon {
 				if(event.getAction()!=Action.PHYSICAL) {
 					gunActionManager(event.getAction());
 					if(fireMode=="SemiAuto") {
+						//CENSE EMPECHE DE MAINTENIR CLIC DROIT
 						event.setCancelled(true);
 					}
 				}
@@ -356,10 +358,12 @@ public class BasePistol extends BaseWeapon {
 				if(player.getInventory().getItemInMainHand().isSimilar(pistolItem)) {
 					if(event.isSneaking() && !isZooming) {
 						player.setWalkSpeed((float) (player.getWalkSpeed()-(0.2*(zoomPower/100))));
+						isZooming=true;
 						return;
 					}
 					if(event.isCancelled() && isZooming) {
 						player.setWalkSpeed((float) (player.getWalkSpeed()+(0.2*(zoomPower/100))));
+						isZooming=false;
 					}
 				}
 			}
@@ -376,6 +380,7 @@ public class BasePistol extends BaseWeapon {
 		if(bulletsFired.size()>=1) {
 			if(bulletsFired.contains(event.getDamager())) {
 				if(isExplosive) {
+					//CENSE FAIRE PASSER LA BOULE DE NEIGE A TRAVERS LE MEC, JE VERRAIA APRES
 					event.setCancelled(true);
 					return;
 				}
@@ -388,9 +393,11 @@ public class BasePistol extends BaseWeapon {
 		}
 		if(isExplosive) {
 			if(tntFired.size()>=1) {
-				if(tntFired.contains(event.getDamager())&&event.getEntity() instanceof Player) {
-					event.setDamage(damage);
-					tntFired.remove(event.getDamager());
+				if(tntFired.contains(event.getDamager())) {
+					if(event.getEntity() instanceof Player) {
+						event.setDamage(damage);
+						tntFired.remove(event.getDamager());
+					}
 				}
 			}
 		}
@@ -401,6 +408,7 @@ public class BasePistol extends BaseWeapon {
 			if(hasTravelTime) {
 				if(bulletsFired.contains(event.getEntity())) {
 					summonTNT(event.getEntity().getLocation());
+					bulletsFired.remove(event.getEntity());
 				}
 			}
 			return;

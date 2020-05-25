@@ -15,14 +15,18 @@ import fr.convoyteam.convoy.weapons.*;
 
 public enum WeaponList {
 	
-	butterflyKnife(makeMenuItem(Material.IRON_SWORD,ChatColor.GOLD+"Couteau Papillon"/*Je sait pas comment utiliser notre traducteur ici*/),ButterflyKnife.class);
+	butterflyKnife(makeMenuItem(Material.IRON_SWORD,ChatColor.GOLD+"Couteau Papillon"/*Je sait pas comment utiliser notre traducteur ici*/)
+			,ButterflyKnife.class
+			,WeaponLevel.PRIMAIRE);
 	
 	private final ItemStack menuItem;
 	private final Class<? extends BaseWeapon> classRef;
+	private final WeaponLevel level;
 	
-	private WeaponList(ItemStack menu, Class<? extends BaseWeapon> clazz) {
+	private WeaponList(ItemStack menu, Class<? extends BaseWeapon> clazz,WeaponLevel lvl) {
 		menuItem = menu;
 		classRef=clazz;
+		level=lvl;
 	}
 	
 	private static ItemStack makeMenuItem(Material mat, String name, String... lore) {
@@ -46,6 +50,10 @@ public enum WeaponList {
 			e.printStackTrace();
 		}
 		return null;
+	}
+	
+	public WeaponLevel getLevel() {
+		return level;
 	}
 	
 }

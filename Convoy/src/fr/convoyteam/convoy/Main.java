@@ -1,6 +1,7 @@
 package fr.convoyteam.convoy;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.WeakHashMap;
 
 import org.bukkit.Bukkit;
@@ -90,13 +91,34 @@ public class Main extends JavaPlugin implements Listener {
 			return false;
 		}
 	}
-	public void reloadWeapons() {
+	public void clearWeapons() {
+		for (BaseWeapon w : weapons) {
+			w.remove();
+		}
 		weapons.clear();
-		loadGuns();
 	}
 	
-	public void loadGuns() {
-		
+	public void addWeapon(BaseWeapon w) {
+		weapons.add(w);
+	}
+	
+	public List<BaseWeapon> getPlayerWeapons(Player p) {
+		ArrayList<BaseWeapon> l = new ArrayList<BaseWeapon>();
+		for (BaseWeapon w : weapons) {
+			if (w.getOwner().equals(p)) {
+				l.add(w);
+			}
+		}
+		return l;
+	}
+	
+	public boolean hasThisLevel(List<BaseWeapon> w,WeaponLevel l) {
+		for (BaseWeapon a : w) {
+			if (a.getWeaponListRef().getLevel()==l) {
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	/**

@@ -13,6 +13,7 @@ import org.bukkit.block.data.Rail;
 import org.bukkit.block.data.Rail.Shape;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
 import fr.convoyteam.convoy.weapons.BasePistol;
@@ -225,30 +226,40 @@ public class ConfigReader {
 	 * @param pistolName Nom du pistolet (sans le ".yml")
 	 * @return BasePistol
 	 */
-	public BasePistol getPistol(String pistolName) {
+	public BasePistol getPistol(Player player, String pistolName) {
 		YamlConfiguration config = getPistolConfig(pistolName);
 		if (config!=null) {
 			ArrayList<Object> weaponValues = new ArrayList<Object>();
+			String weaponName = config.getString("weaponName");
+			weaponValues.add(weaponName);
+			String weaponType = config.getString("weaponType");
+			weaponValues.add(weaponType);
 			byte magazineCapacity = (byte)config.getInt("magazineCapacity");
 			weaponValues.add(magazineCapacity);
+			long reloadTime = config.getLong("reloadTime");
+			weaponValues.add(reloadTime);
 			String fireMode = config.getString("fireMode");
 			weaponValues.add(fireMode);
-			float fireRate = (float)config.get("fireRate");
+			long fireRate = config.getLong("fireRate");
 			weaponValues.add(fireRate);
-			float precision = (float)config.get("precision");
-			weaponValues.add(precision);
 			float damage = (float)config.get("damage");
 			weaponValues.add(damage);
+			int bulletNumber = config.getInt("bulletNumber");
+			weaponValues.add(bulletNumber);
+			long timeBetweenBullet = config.getLong("timeBetweenBullet");
+			weaponValues.add(timeBetweenBullet);
+			float precision = (float) config.get("precision");
+			weaponValues.add(precision);
 			float bulletSpeed = (float)config.get("bulletSpeed");
 			weaponValues.add(bulletSpeed);
-			float firingSlow = (float)config.get("firingSlow");
-			weaponValues.add(firingSlow);
+			float explosionRadius = (float)config.get("explosionRadius");
+			weaponValues.add(explosionRadius);	
 			float zoomPower = (float)config.get("zoomPower");
 			weaponValues.add(zoomPower);
-			float carrySlow = (float)config.get("carrySlow");
+			int carrySlow = config.getInt("carrySlow");
 			weaponValues.add(carrySlow);
 			if(!weaponValues.contains(null)) {
-				return new BasePistol(magazineCapacity, fireMode, fireRate, damage, precision, bulletSpeed, firingSlow, zoomPower, carrySlow);
+				return new BasePistol(mainref, player, weaponName, weaponType, magazineCapacity, reloadTime, fireMode, fireRate, damage, bulletNumber,timeBetweenBullet, precision, bulletSpeed, explosionRadius, zoomPower, carrySlow);
 			}
 		}
 		return null;

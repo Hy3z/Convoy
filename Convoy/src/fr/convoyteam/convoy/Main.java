@@ -27,6 +27,7 @@ import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import fr.convoyteam.convoy.enums.Team;
+import fr.convoyteam.convoy.enums.WeaponLevel;
 
 /**
  * Main class, représente le plugin et la seule game

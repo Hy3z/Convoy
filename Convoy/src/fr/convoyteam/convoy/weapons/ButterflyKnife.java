@@ -4,7 +4,7 @@ import org.bukkit.inventory.ItemStack;
 
 import fr.convoyteam.convoy.BaseWeapon;
 
-public class Test extends BaseWeapon {
+public class ButterflyKnife extends BaseWeapon {
 
 	@Override
 	public ItemStack getMenuItem() {

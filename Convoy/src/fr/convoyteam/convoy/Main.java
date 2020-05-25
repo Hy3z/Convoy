@@ -308,4 +308,8 @@ public class Main extends JavaPlugin implements Listener {
 	public boolean isStarted() {
 		return gameStarted;
 	}
+	
+	public void RegisterListener(Listener l) {
+		pmanager.registerEvents(l, this);
+	}
 }

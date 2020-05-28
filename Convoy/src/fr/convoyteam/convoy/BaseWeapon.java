@@ -58,7 +58,7 @@ public abstract class BaseWeapon implements Listener {
 		return weaponInfoRef;
 	}
 	
-	public Main getMMainRef() {
+	public Main getMainRef() {
 		return mainref;
 	}
 	

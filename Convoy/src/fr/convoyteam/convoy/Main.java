@@ -2,6 +2,7 @@ package fr.convoyteam.convoy;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.WeakHashMap;
 
 import org.bukkit.Bukkit;
@@ -244,6 +245,10 @@ public class Main extends JavaPlugin implements Listener {
 			}
 		}
 		return pl;
+	}
+	
+	public Set<Player> getInGamePlayers(){
+		return InGamePlayers.keySet();
 	}
 	@EventHandler
 	public void onPlayerDropItem(PlayerDropItemEvent event) {

@@ -50,7 +50,6 @@ public class LangManager {
 		}
 		return null;
 	}
-	//
 	public void add(Player p) {
 		playerLanguage.put(p,getLanguage(p));
 	}

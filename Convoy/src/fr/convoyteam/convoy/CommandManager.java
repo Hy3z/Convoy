@@ -2,6 +2,7 @@ package fr.convoyteam.convoy;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -14,6 +15,8 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
+
+import fr.convoyteam.convoy.enums.Team;
 
 public class CommandManager implements CommandExecutor,TabCompleter {
 	private final Main mainref;
@@ -42,23 +45,29 @@ public class CommandManager implements CommandExecutor,TabCompleter {
 		mapCommands.add("setDefenderSpawn");
 		mapCommands.add("setTrackLenght");
 	}
-		
+	
+//---------------------------------------------------------------------------------------------------------------------------------------------
+
 	@Override
 	public boolean onCommand(CommandSender sender, Command arg1, String arg2, String[] arg3) {
 		switch(arg3[0]) {
 		case "start":
-			/*if(GameEnCours) {
-			gameRunningError(sender);
-			return false;
-			}*/
+			if(mainref.isStarted()) {
+				gameRunningError(sender);
+				return false;
+			}
+			if(mainref.getInGamePlayers().size()==0) {
+				noPlayerError(sender);
+				return false;
+			}
 			mainref.startGame();
 			return true;
 			
 		case "join":
-			/*if(GameEnCours) {
+			if(mainref.isStarted()) {
 				gameRunningError(sender);
 				return false;
-			}*/
+			}
 			Player toAdd;
 			if(arg3.length>2) {
 				toAdd=Bukkit.getPlayer(arg3[1]);
@@ -83,12 +92,40 @@ public class CommandManager implements CommandExecutor,TabCompleter {
 			return false;
 			
 		case "ff":
-			/*if(GamePasEnCours) {
-			gameNotRunningError(sender);
-			return false;
-			}*/
-			
-			//FAIRE LE FF
+			if(!(sender instanceof Player)) {
+				notPlayerError(sender);
+				return false;
+			}
+			if(!mainref.isStarted()) {
+				gameNotRunningError(sender);
+				return false;
+			}
+			Set<Player> inGamePlayers = mainref.getInGamePlayers();
+			if(!inGamePlayers.contains(sender)) {
+				notInGameError(sender);
+				return false;
+			}
+			Player player = (Player)sender;
+			if(mainref.getPlayerTeam(player).equals(Team.PUSHERS)) {
+				if(mainref.getPusherFF().contains(player)) {
+					alreadySurrError(sender);
+					return false;
+				}
+				for(Player pusher : mainref.getPushers()) {
+					pusher.sendMessage(ChatColor.GOLD+player.getName()+ChatColor.RED+" wants to surrender "+ChatColor.GOLD+"["+(mainref.getPusherFF().size()+1)+"/"+mainref.getPushers().size()+"]");
+				}
+				mainref.addSurrenderPlayer(player);
+				return true;
+			}
+			if(mainref.getDefenderFF().contains(player)) {
+				alreadySurrError(sender);
+				return false;
+			}
+			for(Player pusher : mainref.getDefenders()) {
+				pusher.sendMessage(ChatColor.GOLD+player.getName()+ChatColor.RED+" wants to surrender "+ChatColor.GOLD+"["+(mainref.getDefenderFF().size()+1)+"/"+mainref.getDefenders().size()+"]");
+			}
+			mainref.addSurrenderPlayer(player);
+			return true;
 			
 		case "leave":
 			Player toKick;
@@ -115,19 +152,19 @@ public class CommandManager implements CommandExecutor,TabCompleter {
 			return false;
 			
 		case "restart":
-			/*if(GamePasEnCours) {
-			gameNotRunningError(sender);
-			return false;
-			}*/
+			if(mainref.isStarted()) {
+				gameNotRunningError(sender);
+				return false;
+			}
 			mainref.stopGame();
 			mainref.startGame();
 			return true;
 			
 		case "stop":
-			/*if(GamePasEnCours) {
+			if(!mainref.isStarted()) {
 			gameNotRunningError(sender);
 			return false;
-			}*/
+			}
 			mainref.stopGame();
 			sender.sendMessage(ChatColor.GREEN+"Game stopped!");
 			return true;
@@ -296,6 +333,9 @@ public class CommandManager implements CommandExecutor,TabCompleter {
 		}
 		return false;
 	}
+	
+//---------------------------------------------------------------------------------------------------------------------------------------------
+
 	public void mapError(CommandSender sender) {
 		sender.sendMessage("");
 		sender.sendMessage(ChatColor.RED+"This map does not exist!");
@@ -322,15 +362,33 @@ public class CommandManager implements CommandExecutor,TabCompleter {
 		sender.sendMessage(ChatColor.RED+"This game is not running!");
 		sender.sendMessage("");
 	}
+	public void noPlayerError(CommandSender sender) {
+		sender.sendMessage("");
+		sender.sendMessage(ChatColor.RED+"There is no player in this game!");
+		sender.sendMessage("");
+	}
+	public void notInGameError(CommandSender sender) {
+		sender.sendMessage("");
+		sender.sendMessage(ChatColor.RED+"You are not in this game!");
+		sender.sendMessage("");
+	}
+	public void alreadySurrError(CommandSender sender) {
+		sender.sendMessage("");
+		sender.sendMessage(ChatColor.RED+"You have already surrendered!");
+		sender.sendMessage("");
+	}
+	
+//---------------------------------------------------------------------------------------------------------------------------------------------
+
 	@Override
 	public List<String> onTabComplete(CommandSender arg0, Command arg1, String arg2, String[] arg3) {
 		if(arg3.length<2) {
 			return returnFollowCMD(arg3, gameCommands, 0);
 		}
-		if(arg3[0].equals("map")) {
+		if(arg3[0].equals("map")&&arg3.length<3) {
 			return returnFollowCMD(arg3, mapCommands, 1);
 		}
-		return null;
+		return new ArrayList<String>();
 	}
 	public ArrayList<String> returnFollowCMD(String[] args, ArrayList<String> cmdList, int argsPos){
 		ArrayList<String> afterCMD = new ArrayList<String>();

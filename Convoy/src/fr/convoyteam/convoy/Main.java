@@ -10,6 +10,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -46,6 +47,8 @@ public class Main extends JavaPlugin implements Listener {
 	private static final long GAME_TIME=1200*15;
 	private static final int NB_POINTS=6;
 	private long currentGameTime=0;
+	private ArrayList<Player> surrenderingPushers = new ArrayList<Player>();
+	private ArrayList<Player> surrenderingDefenders = new ArrayList<Player>();
 	private final PluginManager pmanager = Bukkit.getPluginManager();
 	private final ConfigReader cfgReader = new ConfigReader(this);
 	private final LangManager lang = new LangManager(this);
@@ -73,11 +76,84 @@ public class Main extends JavaPlugin implements Listener {
 		pmanager.registerEvents(itfmanager, this);
 	}
 	/**
+	 * Change la team du joueur
+	 * @param player Nom du joueur
+	 * @param team Equipe (PUSHERS/DEFENDERS)
+	 * @return true si tout s'est bien passé
+	 */
+	public boolean setPlayerTeam(Player player, Team team) {
+		if(InGamePlayers.containsKey(player)) {
+			InGamePlayers.replace(player, team);
+			return true;
+		}
+		return false;
+	}
+	/**
+	 * Retourne l'équipe du joueur
+	 * @param player Nom du joueur
+	 * @return null si le joueur n'est pas dans la game
+	 */
+	public Team getPlayerTeam(Player player) {
+		if(InGamePlayers.containsKey(player)) {
+			return InGamePlayers.get(player);
+		}
+		return null;
+	}
+	/**
+	 * Ajoute un joueur au surrender
+	 * @param player nom du joueur
+	 */
+	public void addSurrenderPlayer(Player player) {
+		if(getPlayerTeam(player).equals(Team.PUSHERS)) {
+			if(!surrenderingPushers.contains(player)) {
+				surrenderingPushers.add(player);
+				if(surrenderingPushers.size()==getPushers().size()) {
+					stopGame();
+				}
+			}
+			return;
+		}
+		if(!surrenderingDefenders.contains(player)) {
+			surrenderingDefenders.add(player);
+			if(surrenderingDefenders.size()==getDefenders().size()) {
+				stopGame();
+			}
+		}
+	}
+	/**
+	 * renvoie le nombre de pusher voulant ff
+	 * @return int
+	 */
+	public ArrayList<Player> getPusherFF() {
+		return surrenderingPushers;
+	}
+	/**
+	 * renvoie le nom de defender voulant ff
+	 * @return int
+	 */
+	public ArrayList<Player> getDefenderFF() {
+		return surrenderingDefenders;
+	}
+	/**
 	 * Renvoie le configReader
 	 * @return ConfigReader
 	 */
 	public ConfigReader getConfigReader() {
 		return cfgReader;
+	}
+	/**
+	 * Change la mapName
+	 * @param nom de la map (sans le ".yml")
+	 */
+	public void setMapName(String _mapName) {
+		mapName=_mapName;
+	}
+	/**
+	 * Renvoie le nom de la map
+	 * @return String (sans le ".yml)
+	 */
+	public String getMapName() {
+		return mapName;
 	}
 	/**
 	 * Démarre la partie
@@ -201,9 +277,9 @@ public class Main extends JavaPlugin implements Listener {
 		}
 		player.setGameMode(GameMode.ADVENTURE);
 		if (getPushers().size()<getDefenders().size()) {
-			InGamePlayers.put(player,Team.DEFENDERS);
-		}else {
 			InGamePlayers.put(player,Team.PUSHERS);
+		}else {
+			InGamePlayers.put(player,Team.DEFENDERS);
 		}
 		player.getInventory().clear();
 		itfmanager.setSettingItemInInventory(player);
@@ -352,6 +428,10 @@ public class Main extends JavaPlugin implements Listener {
 	}
 	@EventHandler
 	private void onExplosionEvent(EntityExplodeEvent event) {
+		if(event.getEntityType().equals(EntityType.MINECART_TNT)) {
+			event.setCancelled(true);
+		}
 		event.blockList().clear();
 	}
+
 }

@@ -17,6 +17,7 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityDamageByBlockEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.ExplosionPrimeEvent;
+import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
@@ -403,22 +404,19 @@ public class BasePistol extends BaseWeapon {
 		}
 	}
 	@EventHandler
-	private void onEntityByBlock(EntityDamageByBlockEvent event) {
-		if(isExplosive) {
-			if(hasTravelTime) {
-				if(bulletsFired.contains(event.getEntity())) {
-					summonTNT(event.getEntity().getLocation());
-					bulletsFired.remove(event.getEntity());
-				}
-			}
-			return;
-		}
-		if(bulletsFired.contains(event.getEntity())) {
-			bulletsFired.remove(event.getEntity());
-		}
-		
-	}
-
+	public void onProjectileHit(ProjectileHitEvent event) {
+        Entity entity = event.getEntity();
+        if (entity instanceof Snowball) {
+        	if(bulletsFired.contains(entity)) {
+        		if(isExplosive) {
+        			summonTNT(entity.getLocation());
+        		}
+        		bulletsFired.remove(entity);
+        	}
+        	
+        }
+        	
+	}         
 	@Override
 	protected ItemStack makeTheGun() {
 		// TODO Auto-generated method stub

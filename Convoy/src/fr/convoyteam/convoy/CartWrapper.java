@@ -71,8 +71,9 @@ public class CartWrapper implements Listener {
 	public void tick() {
 		for(Vector vector : vectorForParticles) {
 			Location particleLoc=cart.getLocation().add(vector);
-			world.spawnParticle(Particle.END_ROD, particleLoc.getX(), particleLoc.getY(), particleLoc.getZ(), 1, 0, 0, 0, 0);
+			world.spawnParticle(Particle.END_ROD, particleLoc.getX(), particleLoc.getY(), particleLoc.getZ(), 1, 0, 0, 0, 0.01);
 		}
+		showAdvancemementForDefenders();
 		if(getPushersInRange().size()>=1) {
 			if(cart.getMaxSpeed()==0) {
 				cart.setMaxSpeed(0.4);
@@ -102,7 +103,26 @@ public class CartWrapper implements Listener {
 		for(Player pusher : mainref.getPushers()) {	
 			Float percentage = (float)railNumber/TOTAL_RAIL;
 			int percent = Math.round(percentage*100);
-			pusher.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.DARK_GREEN+"cartStatus: "+ChatColor.GOLD+percent+"%"));
+			if(cartStatus.equals("[Standby]")) {
+				pusher.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.RED+cartStatus+": "+ChatColor.GOLD+percent+"%"));
+				return;
+			}
+			pusher.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.DARK_GREEN+cartStatus+": "+ChatColor.GOLD+percent+"%"));
+		}
+	}
+	private void showAdvancemementForDefenders() {
+		for (Player defender : mainref.getDefenders()) {
+			Float percentage = (float)railNumber/TOTAL_RAIL;
+			int percent = Math.round(percentage*100);
+			if(percent<33) {
+				defender.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.DARK_GREEN+"Advancemement: "+ChatColor.GOLD+percent+"%"));
+				return;
+			}
+			if(percent<66) {
+				defender.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.YELLOW+"Advancemement: "+ChatColor.GOLD+percent+"%"));
+				return;
+			}
+			defender.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.RED+"Advancemement: "+ChatColor.GOLD+percent+"%"));
 		}
 	}
 	

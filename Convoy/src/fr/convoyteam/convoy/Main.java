@@ -14,13 +14,12 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerGameModeChangeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
@@ -50,6 +49,7 @@ public class Main extends JavaPlugin implements Listener {
 	private final PluginManager pmanager = Bukkit.getPluginManager();
 	private final ConfigReader cfgReader = new ConfigReader(this);
 	private final LangManager lang = new LangManager(this);
+	private final InterfaceManager itfmanager = new InterfaceManager(this);
 	private final BukkitRunnable gameTimer = new BukkitRunnable() {
 		@Override
 		public void run() {
@@ -57,7 +57,7 @@ public class Main extends JavaPlugin implements Listener {
 		}
 	};
 	private boolean gameStarted=false;
-	private  String mapName="";
+	private  String mapName="osef";
 	//TOLOAD
 	private Location defenderSpawn=null;
 	private Location pusherSpawn=null;
@@ -70,6 +70,14 @@ public class Main extends JavaPlugin implements Listener {
 	public void onEnable() {
 		getCommand("conv").setExecutor(new CommandManager(this,cfgReader));
 		pmanager.registerEvents(this, this);
+		pmanager.registerEvents(itfmanager, this);
+	}
+	/**
+	 * Renvoie le configReader
+	 * @return ConfigReader
+	 */
+	public ConfigReader getConfigReader() {
+		return cfgReader;
 	}
 	/**
 	 * Démarre la partie
@@ -86,6 +94,7 @@ public class Main extends JavaPlugin implements Listener {
 				p.getInventory().clear();
 				respawnPlayer(p);
 				playersPoints.put(p, NB_POINTS);
+				p.sendMessage(ChatColor.GREEN+"Game started!");
 			}
 			gameTimer.runTaskTimer(this, 0,1);
 			return true;
@@ -129,6 +138,9 @@ public class Main extends JavaPlugin implements Listener {
 	 */
 	public boolean stopGame() {
 		if (gameStarted) {
+			for(Player player : getInGamePlayers()) {
+				player.sendMessage(ChatColor.GOLD+"Game Ended!");
+			}
 			gameStarted=false;
 			gameTimer.cancel();
 			cartRef.destroyCart();
@@ -189,16 +201,12 @@ public class Main extends JavaPlugin implements Listener {
 		}
 		player.setGameMode(GameMode.ADVENTURE);
 		if (getPushers().size()<getDefenders().size()) {
-			InGamePlayers.put(player,Team.PUSHERS);
-		}else {
 			InGamePlayers.put(player,Team.DEFENDERS);
+		}else {
+			InGamePlayers.put(player,Team.PUSHERS);
 		}
 		player.getInventory().clear();
-		ItemStack itm = new ItemStack(Material.SUNFLOWER);
-		ItemMeta meta = itm.getItemMeta();
-		meta.setDisplayName(ChatColor.GOLD+lang.get(player, "lobby.itemStartName"));
-		itm.setItemMeta(meta);
-		player.getInventory().setItem(0, itm);
+		itfmanager.setSettingItemInInventory(player);
 		return true;
 	}
 	
@@ -271,9 +279,11 @@ public class Main extends JavaPlugin implements Listener {
 	@EventHandler
 	public void onPlayerChangeGameMode(PlayerGameModeChangeEvent event) {
 		if (InGamePlayers.containsKey(event.getPlayer())) {
-			event.setCancelled(true);
-			event.getPlayer().sendMessage(ChatColor.RED+lang.get(event.getPlayer(), "game.gamemodeChange"));
-			return;
+			if(gameStarted) {
+				event.setCancelled(true);
+				event.getPlayer().sendMessage(ChatColor.RED+lang.get(event.getPlayer(), "game.gamemodeChange"));
+				return;
+			}
 		}
 	}
 	@EventHandler
@@ -339,5 +349,9 @@ public class Main extends JavaPlugin implements Listener {
 	
 	public void RegisterListener(Listener l) {
 		pmanager.registerEvents(l, this);
+	}
+	@EventHandler
+	private void onExplosionEvent(EntityExplodeEvent event) {
+		event.blockList().clear();
 	}
 }

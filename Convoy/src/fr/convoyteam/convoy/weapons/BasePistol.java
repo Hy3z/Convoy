@@ -418,4 +418,10 @@ public class BasePistol extends BaseWeapon {
 		}
 		
 	}
+
+	@Override
+	protected ItemStack makeTheGun() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

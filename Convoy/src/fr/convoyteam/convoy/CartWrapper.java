@@ -2,6 +2,7 @@ package fr.convoyteam.convoy;
 
 import java.util.ArrayList;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -9,6 +10,7 @@ import org.bukkit.Particle;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Rail;
 import org.bukkit.block.data.Rail.Shape;
 import org.bukkit.entity.EntityType;
@@ -17,7 +19,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
-import org.bukkit.event.vehicle.VehicleEntityCollisionEvent;
 import org.bukkit.event.vehicle.VehicleMoveEvent;
 import org.bukkit.util.Vector;
 
@@ -30,18 +31,20 @@ public class CartWrapper implements Listener {
 	private Location spawnLocation;
 	private Location endLocation;
 	private Main mainref;
-	private final byte MAX_PUSH_RANGE = 2;
+	private final float MAX_PUSH_RANGE = 3.5f;
 	private int TOTAL_RAIL;
 	private Block previousBlock;
 	private int railNumber;
-	private final ArrayList<Vector> vectorForParticles = fillPushVectorList(20);
-	public CartWrapper(Main _mainref, Location _spawnLocation, Location _endLocation, Integer _TOTAL_RAIL) {
+	private final ArrayList<Vector> vectorForParticles = fillPushVectorList(5);
+	public CartWrapper(Main _mainref, Location _spawnLocation, Location _endLocation, int _TOTAL_RAIL) {
 		mainref=_mainref;
 		spawnLocation=_spawnLocation;
 		endLocation=_endLocation;
 		TOTAL_RAIL=_TOTAL_RAIL;
 		world=spawnLocation.getWorld();
+		previousBlock=spawnLocation.getBlock();
 		summonCart();
+		cart.setGlowing(true);
 	}
 
 //---------------------------------------------------------------------------------------------------------------------------------------------
@@ -67,13 +70,14 @@ public class CartWrapper implements Listener {
 	 */
 	public void tick() {
 		for(Vector vector : vectorForParticles) {
-			world.spawnParticle(Particle.END_ROD, cart.getLocation().add(vector), 1);
+			Location particleLoc=cart.getLocation().add(vector);
+			world.spawnParticle(Particle.END_ROD, particleLoc.getX(), particleLoc.getY(), particleLoc.getZ(), 1, 0, 0, 0, 0);
 		}
 		if(getPushersInRange().size()>=1) {
 			if(cart.getMaxSpeed()==0) {
 				cart.setMaxSpeed(0.4);
 			}
-			cart.setVelocity(new Vector(0,0.05,0));	
+			cart.setVelocity(new Vector(0.05,0,0));	
 			showAdvancementForPushers("[Pushing]");
 			return;
 		}
@@ -95,8 +99,10 @@ public class CartWrapper implements Listener {
 //---------------------------------------------------------------------------------------------------------------------------------------------
 
 	private void showAdvancementForPushers(String cartStatus) {
-		for(Player pusher : mainref.getPushers()) {
-			pusher.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.DARK_GREEN+"cartStatus: "+ChatColor.GOLD+Math.round((railNumber/TOTAL_RAIL)*100)+"%"));
+		for(Player pusher : mainref.getPushers()) {	
+			Float percentage = (float)railNumber/TOTAL_RAIL;
+			int percent = Math.round(percentage*100);
+			pusher.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(ChatColor.DARK_GREEN+"cartStatus: "+ChatColor.GOLD+percent+"%"));
 		}
 	}
 	
@@ -118,20 +124,28 @@ public class CartWrapper implements Listener {
 		}
 	}
 	private BlockFace getRailDirection() {
-		Shape railShape = ((Rail)spawnLocation.getBlock().getBlockData()).getShape();
+		Shape railShape;
+		BlockData spawnBlockData = spawnLocation.getBlock().getBlockData();
+		if(spawnBlockData instanceof Rail) {
+			railShape = ((Rail) spawnBlockData).getShape();
+		}else {
+			mainref.stopGame();
+			return null;
+		}
 		ArrayList<Material> railList = new ArrayList<Material>();
 		railList.add(Material.RAIL);
 		railList.add(Material.ACTIVATOR_RAIL);
 		railList.add(Material.DETECTOR_RAIL);
 		railList.add(Material.POWERED_RAIL);
+		Location spawnLocationClone=spawnLocation.clone();
 		switch(railShape) {
 		case NORTH_SOUTH:
-			if(railList.contains(world.getBlockAt(spawnLocation.add(0, 0, -1)).getType())) {
+			if(railList.contains(world.getBlockAt(spawnLocationClone.add(0, 0, -1)).getType())) {
 				return BlockFace.NORTH;
 			}
 			return BlockFace.SOUTH;
 		case EAST_WEST:
-			if(railList.contains(world.getBlockAt(spawnLocation.add(1, 0, 0)).getType())) {
+			if(railList.contains(world.getBlockAt(spawnLocationClone.add(1, 0, 0)).getType())) {
 				return BlockFace.EAST;
 			}
 			return BlockFace.WEST;
@@ -147,13 +161,13 @@ public class CartWrapper implements Listener {
 	private ArrayList<Vector> fillPushVectorList(int nbPointsParRayon) {
 		ArrayList<Vector> vectorList = new ArrayList<Vector>();
 		float pas = MAX_PUSH_RANGE/nbPointsParRayon;
-		for (float x=0f; x<=MAX_PUSH_RANGE; x=x+pas) {
-			double alpha = Math.acos(x/2);
-			double y = Math.sin(alpha)*2;
-			vectorList.add(new Vector(x,0,y));
-			vectorList.add(new Vector(-x,0,y));
-			vectorList.add(new Vector(x,0,-y));
-			vectorList.add(new Vector(-x,0,-y));
+		for (float x=pas; x<=MAX_PUSH_RANGE; x=x+pas) {
+			double alpha = Math.acos(x/MAX_PUSH_RANGE);
+			double z = (Math.sin(alpha))*MAX_PUSH_RANGE;
+			vectorList.add(new Vector(x,0,z));
+			vectorList.add(new Vector(-x,0,z));
+			vectorList.add(new Vector(x,0,-z));
+			vectorList.add(new Vector(-x,0,-z));
 		}
 		return vectorList;
 	}
@@ -171,25 +185,20 @@ public class CartWrapper implements Listener {
 
 	@EventHandler
 	private void onCartMove(VehicleMoveEvent event) {
-		if(event.getVehicle()==cart) {
-			if(cart.getLocation()==endLocation){
+		if(event.getVehicle().equals(cart)) {
+			if(endLocation.distanceSquared(cart.getLocation())<=0.001) {
+				Bukkit.getConsoleSender().sendMessage(""+cart.getLocation());
 				mainref.stopGame();
 				return;
 			}
 			Block currentRail = cart.getLocation().getBlock();
-			if(currentRail!=previousBlock) {
+			if(!currentRail.equals(previousBlock)) {
 				previousBlock=currentRail;
 				railNumber++;
 			}
 			if(getPushersInRange().size()==0&&cart.getMaxSpeed()!=0) {
 				cart.setMaxSpeed(0);
 			}
-		}
-	}
-	@EventHandler
-	private void onMinecartCollision(VehicleEntityCollisionEvent event) {
-		if(event.getVehicle()==cart) {
-			event.setCollisionCancelled(true);
 		}
 	}
 }

@@ -5,6 +5,9 @@ import java.util.List;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.FluidCollisionMode;
+import org.bukkit.Location;
+import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -49,7 +52,6 @@ public class CommandManager implements CommandExecutor,TabCompleter {
 			return false;
 			}*/
 			mainref.startGame();
-			sender.sendMessage(ChatColor.GREEN+"Game started!");
 			return true;
 			
 		case "join":
@@ -72,11 +74,11 @@ public class CommandManager implements CommandExecutor,TabCompleter {
 				toAdd=(Player)sender;
 			}
 			if(mainref.addPlayer(toAdd)) {
-				sender.sendMessage(ChatColor.GREEN+"Player joined the game");
+				sender.sendMessage(ChatColor.GREEN+toAdd.getName()+" joined Convoy");
 				return true;
 			}
 			sender.sendMessage("");
-			sender.sendMessage(ChatColor.RED+"Player is already in game!");
+			sender.sendMessage(ChatColor.RED+toAdd.getName()+" is already in Convoy!");
 			sender.sendMessage("");
 			return false;
 			
@@ -191,7 +193,9 @@ public class CommandManager implements CommandExecutor,TabCompleter {
 						if (sender instanceof Player) {
 							YamlConfiguration cfg = configref.getMapConfig(arg3[2]);
 							if(cfg!=null) {
-								configref.setCartStart(arg3[2], ((Player)sender).getEyeLocation());
+								Block targetBlock = ((Player)sender).getTargetBlockExact(100, FluidCollisionMode.NEVER);
+								Location targetLocation = targetBlock.getLocation().add(0.5, 0, 0.5);
+								configref.setCartStart(arg3[2], targetLocation);
 								sender.sendMessage(ChatColor.GREEN+"Start of the track set!");
 								return true;
 							}
@@ -212,7 +216,9 @@ public class CommandManager implements CommandExecutor,TabCompleter {
 						if (sender instanceof Player) {
 							YamlConfiguration cfg = configref.getMapConfig(arg3[2]);
 							if(cfg!=null) {
-								configref.setCartEnd(arg3[2], ((Player)sender).getEyeLocation());
+								Block targetBlock = ((Player)sender).getTargetBlockExact(100, FluidCollisionMode.NEVER);
+								Location targetLocation = targetBlock.getLocation().add(0.5, 0.0625, 0.5);
+								configref.setCartEnd(arg3[2], targetLocation);
 								sender.sendMessage(ChatColor.GREEN+"End of the track set!");
 								return true;
 							}
@@ -270,19 +276,19 @@ public class CommandManager implements CommandExecutor,TabCompleter {
 					sender.sendMessage("");
 					return false;
 				case "setTrackLenght":
-					if(arg3.length>2) {
+					if(arg3.length>3) {
 						YamlConfiguration cfg = configref.getMapConfig(arg3[2]);
 						if(cfg!=null) {
-							configref.setTrackLenght(arg3[2]);
-							sender.sendMessage(ChatColor.GREEN+"Track lenght registered!");
+							configref.setTrackLenght(arg3[2],Integer.parseInt(arg3[3]));
+							sender.sendMessage(ChatColor.GREEN+"Track lenght: "+arg3[3]);
 							return true;
 						}
 						mapError(sender);
 						return false;
 					}
 					sender.sendMessage("");
-					sender.sendMessage(ChatColor.BLUE+"Usage: "+ChatColor.WHITE+"/conv map setTrackLenght "+ChatColor.GOLD+"<MapName>");
-					sender.sendMessage(ChatColor.RED+"! "+ChatColor.BLUE+"Will set the number of rails of the track "+ChatColor.RED+"!");
+					sender.sendMessage(ChatColor.BLUE+"Usage: "+ChatColor.WHITE+"/conv map setTrackLenght "+ChatColor.GOLD+"<MapName> <railNumber>");
+					sender.sendMessage(ChatColor.RED+"! "+ChatColor.BLUE+"Will set the specified number of rails as percentage tracker "+ChatColor.RED+"!");
 					sender.sendMessage("");
 					return false;
 				}

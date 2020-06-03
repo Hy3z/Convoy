@@ -1,7 +1,7 @@
 name: Convoy
 version: 1.0
 authors: [Hyez,XxGoldenbluexX]
-main: fr.convoy.convoy.Main
+main: fr.convoyteam.convoy.Main
 api-version: 1.15
 commands:
   conv:

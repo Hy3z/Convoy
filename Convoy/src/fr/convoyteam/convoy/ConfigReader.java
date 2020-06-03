@@ -7,14 +7,9 @@ import java.util.ArrayList;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.World;
-import org.bukkit.block.data.Rail;
-import org.bukkit.block.data.Rail.Shape;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.util.Vector;
 
 import fr.convoyteam.convoy.weapons.BasePistol;
 
@@ -392,17 +387,12 @@ public class ConfigReader {
 	 * @param mapName Nom de la map (sans le ".yml")
 	 * @return True si tout s'est bien passé
 	 */
-	public boolean setTrackLenght(String mapName) {
+	public boolean setTrackLenght(String mapName, int railLenght) {
 		YamlConfiguration config = getMapConfig(mapName);
-		if (config!=null) {
-			Location startLocation = getCartStart(mapName);
-			Location endLocation = getCartEnd(mapName);
-			if(startLocation!=null&&endLocation!=null) {
-				int railLenght = calculateTrackLenght(startLocation,endLocation);
-				config.set("trackLenght", railLenght);
-				saveMapConfig(mapName, config);
-				return true;
-			}
+		if (config!=null&&railLenght>0) {
+			config.set("trackLenght", railLenght);
+			saveMapConfig(mapName, config);
+			return true;
 		}
 		return false;
 	}
@@ -417,103 +407,5 @@ public class ConfigReader {
 			return config.getInt("trackLenght");
 		}
 		return -1;
-	}
-	
-//---------------------------------------------------------------------------------------------------------------------------------------------
-	
-	private int calculateTrackLenght(Location startLocation, Location endLocation) {
-		World world = startLocation.getWorld();
-		int railCount=0;
-		Location newLocation=null;
-		Location currentLocation=startLocation;
-		Location previousLocation=null;
-		while(currentLocation.getBlock()!=endLocation.getBlock()) {
-			if(railCount!=0) {
-				newLocation = getNewLocation(world, currentLocation, previousLocation);
-			}else {
-				newLocation = getSecondLocation(world, currentLocation);
-			}
-			previousLocation = currentLocation;
-			currentLocation = newLocation;
-			railCount++;
-		}
-		return railCount;
-	}
-	
-	private Location getNewLocation(World world, Location currentLocation, Location previousLocation) {
-		Shape railShape = ((Rail)currentLocation.getBlock().getBlockData()).getShape();
-		switch(railShape) {
-		case ASCENDING_EAST:
-			return ascendingRail(currentLocation, previousLocation, new Vector(1,1,0));
-		case ASCENDING_NORTH:
-			return ascendingRail(currentLocation, previousLocation, new Vector(0,1,-1));
-		case ASCENDING_SOUTH:
-			return ascendingRail(currentLocation, previousLocation, new Vector(0,1,1));
-		case ASCENDING_WEST:
-			return ascendingRail(currentLocation, previousLocation, new Vector(-1,1,0));
-		case EAST_WEST:
-			return straightRail(currentLocation, previousLocation, new Vector(-1,0,0));
-		case NORTH_SOUTH:
-			return straightRail(currentLocation, previousLocation, new Vector(0,0,1));	
-		case NORTH_EAST:
-			return (turningRail(currentLocation, previousLocation, new Vector(1,0,0), new Vector(0,0,-1)));
-		case NORTH_WEST:
-			return (turningRail(currentLocation, previousLocation, new Vector(-1,0,0), new Vector(0,0,-1)));
-		case SOUTH_EAST:
-			return (turningRail(currentLocation, previousLocation, new Vector(1,0,0), new Vector(0,0,1)));
-		case SOUTH_WEST:
-			return (turningRail(currentLocation, previousLocation, new Vector(-1,0,0), new Vector(0,0,1)));
-		}
-		return null;
-	}
-	private boolean isNewRail(Location currentLocation, Location previousLocation, Vector vector) {
-		if(currentLocation.add(vector).getBlock()!=previousLocation.getBlock()){
-			return true;
-		}
-		return false;
-	}
-	private Location straightRail(Location currentLocation, Location previousLocation, Vector vector) {
-		if(isNewRail(currentLocation, previousLocation, vector)) {
-			return currentLocation.add(vector);
-		}
-		return currentLocation.subtract(vector);
-	}
-	private Location ascendingRail(Location currentLocation, Location previousLocation, Vector vector) {
-		if(isNewRail(currentLocation, previousLocation, vector)) {
-			return currentLocation.add(vector);
-		}
-		if(isNewRail(currentLocation, previousLocation, vector.multiply(-1))) {
-			return currentLocation.subtract(vector);
-		}
-		return currentLocation.subtract(vector.setY(0));
-	}
-	private Location turningRail(Location currentLocation, Location previousLocation, Vector vector1, Vector vector2) {
-		if(isNewRail(currentLocation, previousLocation, vector1)) {
-			return currentLocation.add(vector1);
-		}
-		return currentLocation.add(vector2);
-	}
-	private Location getSecondLocation(World world, Location startLocation) {
-		Shape railShape = ((Rail)startLocation.getBlock().getBlockData()).getShape();
-		ArrayList<Material> railList = new ArrayList<Material>();
-		railList.add(Material.RAIL);
-		railList.add(Material.ACTIVATOR_RAIL);
-		railList.add(Material.DETECTOR_RAIL);
-		railList.add(Material.POWERED_RAIL);
-		switch(railShape) {
-		case NORTH_SOUTH:
-			if(railList.contains(world.getBlockAt(startLocation.add(0, 0, -1)).getType())) {
-				return startLocation.add(0,0,-1);
-			}
-			return startLocation.add(0,0,1);
-				//
-		case EAST_WEST:
-			if(railList.contains(world.getBlockAt(startLocation.add(1, 0, 0)).getType())) {
-				return startLocation.add(1,0,0);
-			}
-				return startLocation.add(-1,0,0);
-		default:
-			return null;
-		}
 	}
 }

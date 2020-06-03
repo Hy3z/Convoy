@@ -53,12 +53,7 @@ public class Main extends JavaPlugin implements Listener {
 	private final ConfigReader cfgReader = new ConfigReader(this);
 	private final LangManager lang = new LangManager(this);
 	private final InterfaceManager itfmanager = new InterfaceManager(this);
-	private final BukkitRunnable gameTimer = new BukkitRunnable() {
-		@Override
-		public void run() {
-			tickGame();
-		}
-	};
+	private BukkitRunnable gameTimer;
 	private boolean gameStarted=false;
 	private  String mapName="osef";
 	//TOLOAD
@@ -172,7 +167,12 @@ public class Main extends JavaPlugin implements Listener {
 				playersPoints.put(p, NB_POINTS);
 				p.sendMessage(ChatColor.GREEN+"Game started!");
 			}
-			gameTimer.runTaskTimer(this, 0,1);
+			gameTimer=(BukkitRunnable) new BukkitRunnable() {
+				@Override
+				public void run() {
+					tickGame();
+				}
+			}.runTaskTimer(this, 0,1);
 			return true;
 		}else {
 			return false;
